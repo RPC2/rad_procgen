@@ -144,6 +144,10 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
     video_out_path = osp.join(logger.get_dir(), f'video_{env_name}.mp4')
     video_writer = TensorFrameWriter(video_out_path, make_grid=False, adjust_axis=False)
 
+    traj_dict = {
+        'obs': [], 'acts': [], 'rews': [], 'dones': [], 'infos': []
+    }
+
     for update in range(1, nupdates+1):
         assert nbatch % nminibatches == 0
         # Start timer
@@ -163,6 +167,12 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
         
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
+
+        traj_dict['obs'].append(obs)
+        traj_dict['acts'].append(actions)
+        traj_dict['rews'].append(returns)
+        traj_dict['dones'].append(masks)
+        traj_dict['infos'].append(epinfos)
 
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
@@ -238,6 +248,7 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
                 obs = obs
                 for image in obs:
                     video_writer.add_tensor(image)
+
             else:
                 checkdir = osp.join(logger.get_dir(), 'checkpoints')
                 os.makedirs(checkdir, exist_ok=True)
@@ -245,6 +256,10 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
                 print('Saving to', savepath)
                 model.save(savepath)
 
+    import pickle
+    traj_filename = osp.join(logger.get_dir(), f'demo_{env_name}.pickle')
+    with open(traj_filename, 'wb') as handle:
+        pickle.dump(traj_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     video_writer.close()
     return model
 
