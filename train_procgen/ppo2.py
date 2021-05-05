@@ -238,14 +238,14 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
                 obs = obs
                 for image in obs:
                     video_writer.add_tensor(image)
-                video_writer.close()
             else:
                 checkdir = osp.join(logger.get_dir(), 'checkpoints')
                 os.makedirs(checkdir, exist_ok=True)
                 savepath = osp.join(checkdir, '%.5i' % update)
                 print('Saving to', savepath)
                 model.save(savepath)
-
+                
+    video_writer.close()
     return model
 
 
