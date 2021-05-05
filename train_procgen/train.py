@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--data_aug', type=str, default='normal')
     parser.add_argument('--exp_name', type=str, default='try1')
     parser.add_argument('--test_start_level', type=int, default=200) # 500 for hard / 200 for easy
+    parser.add_argument('--load_path', type=str, default=None)
 
     args = parser.parse_args()
 
@@ -64,7 +65,8 @@ def main():
     logger.configure(dir=LOG_DIR, format_strs=format_strs)
 
     logger.info("creating environment")
-    venv = ProcgenEnv(num_envs=num_envs, env_name=args.env_name, num_levels=num_levels, start_level=args.start_level, distribution_mode=args.distribution_mode)
+    venv = ProcgenEnv(num_envs=num_envs, env_name=args.env_name, num_levels=num_levels, start_level=args.start_level,
+                      distribution_mode=args.distribution_mode)
     venv = VecExtractDictObs(venv, "rgb")
 
     venv = VecMonitor(
@@ -117,6 +119,7 @@ def main():
         vf_coef=0.5,
         max_grad_norm=0.5,
         data_aug=args.data_aug,
+        load_path=args.load_path
     )
 
 if __name__ == '__main__':
