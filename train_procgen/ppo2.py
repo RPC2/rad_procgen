@@ -142,8 +142,8 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
     
     nupdates = total_timesteps//nbatch
     video_out_path = osp.join(logger.get_dir(), f'video_{env_name}.mp4')
-    video_writer = TensorFrameWriter(video_out_path, make_grid=False)
-    
+    video_writer = TensorFrameWriter(video_out_path, make_grid=False, adjust_axis=False)
+
     for update in range(1, nupdates+1):
         assert nbatch % nminibatches == 0
         # Start timer
@@ -235,9 +235,8 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
             logger.dumpkvs()
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and is_mpi_root:
             if load_path is not None:
-                obs = th.Tensor(obs) / 233
+                obs = obs / 233
                 for image in obs:
-                    image = image_tensor_to_rgb_grid(image)
                     video_writer.add_tensor(image)
                 video_writer.close()
             else:
