@@ -1,5 +1,6 @@
 from skvideo.io import FFmpegWriter
 import torchvision.utils as vutils
+import torch as th
 
 
 def image_tensor_to_rgb_grid(image_tensor):
