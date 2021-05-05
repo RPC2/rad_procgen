@@ -95,13 +95,17 @@ def main():
 
     conv_fn = lambda x: build_impala_cnn(x, depths=[16,32,32], emb_size=256)
 
+    save_interval = 1 if args.load_path else 62
+    timesteps_per_proc = 100000 if args.load_path else timesteps_per_proc
+
     logger.info("training")
     ppo2.learn(
         env=venv,
+        env_name=args.env_name,
         eval_env=eval_venv,
         network=conv_fn,
         total_timesteps=timesteps_per_proc,
-        save_interval=62,
+        save_interval=save_interval,
         nsteps=nsteps,
         nminibatches=nminibatches,
         lam=lam,
@@ -119,7 +123,7 @@ def main():
         vf_coef=0.5,
         max_grad_norm=0.5,
         data_aug=args.data_aug,
-        load_path=args.load_path
+        load_path=args.load_path,
     )
 
 if __name__ == '__main__':

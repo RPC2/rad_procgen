@@ -8,6 +8,7 @@ from baselines import logger
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
 from train_procgen.policies import build_policy
+from frame_writer import image_tensor_to_rgb_grid, TensorFrameWriter
 
 try:
     from mpi4py import MPI
@@ -20,7 +21,7 @@ def constfn(val):
         return val
     return f
 
-def learn(*, network, env, total_timesteps, eval_env = None, 
+def learn(*, network, env, env_name, total_timesteps, eval_env = None,
           seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
           vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
           log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
@@ -183,7 +184,8 @@ def learn(*, network, env, total_timesteps, eval_env = None,
                     end = start + nbatch_train
                     mbinds = inds[start:end]
                     slices = (arr[mbinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
-                    mblossvals.append(model.train(lrnow, cliprangenow, *slices))
+                    if load_path is not None:
+                        mblossvals.append(model.train(lrnow, cliprangenow, *slices))
         else: # recurrent version
             assert nenvs % nminibatches == 0
             envsperbatch = nenvs // nminibatches
@@ -197,7 +199,8 @@ def learn(*, network, env, total_timesteps, eval_env = None,
                     mbflatinds = flatinds[mbenvinds].ravel()
                     slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                     mbstates = states[mbenvinds]
-                    mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
+                    if load_path is not None:
+                        mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
 
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)
@@ -230,11 +233,19 @@ def learn(*, network, env, total_timesteps, eval_env = None,
 
             logger.dumpkvs()
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and is_mpi_root:
-            checkdir = osp.join(logger.get_dir(), 'checkpoints')
-            os.makedirs(checkdir, exist_ok=True)
-            savepath = osp.join(checkdir, '%.5i'%update)
-            print('Saving to', savepath)
-            model.save(savepath)
+            if load_path is not None:
+                video_out_path = osp.join(logger.get_dir(), f'video_{env_name}.mp4')
+                video_writer = TensorFrameWriter(video_out_path)
+                for image in obs:
+                    image = image_tensor_to_rgb_grid(image)
+                    video_writer.add_tensor(image)
+                video_writer.close()
+            else:
+                checkdir = osp.join(logger.get_dir(), 'checkpoints')
+                os.makedirs(checkdir, exist_ok=True)
+                savepath = osp.join(checkdir, '%.5i' % update)
+                print('Saving to', savepath)
+                model.save(savepath)
 
     return model
 
