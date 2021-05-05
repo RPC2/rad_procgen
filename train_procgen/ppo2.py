@@ -235,7 +235,7 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
             logger.dumpkvs()
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and is_mpi_root:
             if load_path is not None:
-                obs = obs / 233
+                obs = obs
                 for image in obs:
                     video_writer.add_tensor(image)
                 video_writer.close()

@@ -74,21 +74,16 @@ class TensorFrameWriter:
         self.adjust_axis = adjust_axis
         self.make_grid = make_grid
 
-    def add_tensor(self, tensor):
+    def add_tensor(self, np_grid):
         """Add a tensor of shape [..., C, H, W] representing the frame stacks
         for a single time step. Call this repeatedly for each time step you
         want to add."""
         if self.writer is None:
             raise RuntimeError("Cannot run add_tensor() again after closing!")
-        grid = tensor
-        if self.make_grid:
-            grid = image_tensor_to_rgb_grid(tensor)
-        np_grid = grid.numpy()
         if self.adjust_axis:
             # convert to (H, W, 3) numpy array
             np_grid = np_grid.transpose((1, 2, 0))
-        byte_grid = (np_grid * 255).round().astype('uint8')
-        self.writer.writeFrame(byte_grid)
+        self.writer.writeFrame(np_grid)
 
     def __enter__(self):
         assert self.writer is not None, \
