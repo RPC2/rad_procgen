@@ -113,7 +113,6 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
     if load_path is not None:
         model.load(load_path)
 
-    breakpoint()
     # Instantiate the runner object
     runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, data_aug=data_aug)
     
@@ -161,7 +160,6 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
         
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
-        breakpoint()
 
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
@@ -210,7 +208,6 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
         # Calculate the fps (frame per second)
         fps = int(nbatch / (tnow - tstart))
 
-        breakpoint()
         if update_fn is not None:
             update_fn(update)
 
