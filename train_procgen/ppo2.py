@@ -234,7 +234,7 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
             if load_path is not None:
                 video_out_path = osp.join(logger.get_dir(), f'video_{env_name}.mp4')
                 video_writer = TensorFrameWriter(video_out_path)
-                obs = th.Tensor(obs)
+                obs = th.Tensor(obs) / 233
                 for image in obs:
                     image = image_tensor_to_rgb_grid(image)
                     video_writer.add_tensor(image)
