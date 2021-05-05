@@ -244,7 +244,7 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
                 savepath = osp.join(checkdir, '%.5i' % update)
                 print('Saving to', savepath)
                 model.save(savepath)
-                
+
     video_writer.close()
     return model
 
