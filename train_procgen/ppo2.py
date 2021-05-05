@@ -8,7 +8,7 @@ from baselines import logger
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
 from train_procgen.policies import build_policy
-from frame_writer import image_tensor_to_rgb_grid, TensorFrameWriter
+from train_procgen.frame_writer import image_tensor_to_rgb_grid, TensorFrameWriter
 
 try:
     from mpi4py import MPI
