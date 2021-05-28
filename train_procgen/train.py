@@ -96,7 +96,8 @@ def main():
     conv_fn = lambda x: build_impala_cnn(x, depths=[16,32,32], emb_size=256)
 
     save_interval = 1 if args.load_path else 62
-    timesteps_per_proc = 130000 if args.load_path else timesteps_per_proc
+    # timesteps_per_proc = 130000 if args.load_path else timesteps_per_proc
+    timesteps_per_proc = 100000 if args.load_path else timesteps_per_proc
 
     logger.info("training")
     ppo2.learn(

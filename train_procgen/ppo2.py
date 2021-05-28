@@ -141,12 +141,11 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
         init_process = None
     
     nupdates = total_timesteps//nbatch
-    video_out_path = osp.join(logger.get_dir(), f'video_{env_name}.mp4')
-    video_writer = TensorFrameWriter(video_out_path, make_grid=False, adjust_axis=False)
 
     traj_dict = {
         'obs': [], 'acts': [], 'rews': [], 'dones': [], 'infos': []
     }
+    traj_count = 0
 
     for update in range(1, nupdates+1):
         assert nbatch % nminibatches == 0
@@ -245,9 +244,21 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
             logger.dumpkvs()
         if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and is_mpi_root:
             if load_path is not None:
+                video_out_path = osp.join(logger.get_dir(),
+                                          f'video_{env_name}_traj_{traj_count}.mp4')
+                video_writer = TensorFrameWriter(video_out_path, make_grid=False, adjust_axis=False)
                 obs = obs
-                for image in obs:
-                    video_writer.add_tensor(image)
+                for image, done in zip(obs, masks):
+                    if not done:
+                        video_writer.add_tensor(image)
+                    else:
+                        video_writer.close()
+                        breakpoint()
+                        traj_count += 1
+                        video_out_path = osp.join(logger.get_dir(),
+                                          f'video_{env_name}_traj_{traj_count}.mp4')
+                        video_writer = TensorFrameWriter(video_out_path, make_grid=False, adjust_axis=False)
+
 
             else:
                 checkdir = osp.join(logger.get_dir(), 'checkpoints')
@@ -255,6 +266,20 @@ def learn(*, network, env, env_name, total_timesteps, eval_env = None,
                 savepath = osp.join(checkdir, '%.5i' % update)
                 print('Saving to', savepath)
                 model.save(savepath)
+        break
+
+    all_dones = traj_dict['dones'].copy()
+    all_dones = np.concatenate(all_dones, axis=0)
+    traj_ends, = np.nonzero(all_dones)
+    real_n_traj = len(traj_ends)
+    trajectories = []
+    traj_starts = np.concatenate(([0], traj_ends[:-1]), axis=0)
+    traj_start_end = np.stack((traj_starts, traj_ends), axis=1)
+    for start_idx, end_idx in traj_start_end:
+        trajectories.append({
+            k: v[start_idx:end_idx] for k, v in traj_dict.items()
+        })
+    n_traj = len(trajectories)
 
     import pickle
     traj_filename = osp.join(logger.get_dir(), f'demo_{env_name}.pickle')
